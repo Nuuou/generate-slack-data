@@ -1,0 +1,13 @@
+{
+  "name": "generate-slack-data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/web-api": "^5.14.0",
+    "dateformat": "^4.4.0",
+    "dotenv": "^8.2.0"
+  }
+}
