@@ -1,29 +1,22 @@
-require('dotenv').config();
 const dateFormat = require('dateformat');
 const getUserInfo = require('./getUserInfo');
 const getConversationHistory = require('./getConversationHistory');
 
-
 const getData = async () => {
   const output = {
     messages: [],
-    users: [],
   };
 
   const messages = await getConversationHistory();
 
-  for await (message of messages) {
+  await Promise.all(messages.map(async (message) => {
     if (message?.files?.length) {
       const messageOutput = {};
 
       // Tag User if exists.
-      let user = output.users.find((user) => user.id === message.user);
-
-      // Fetch user and tag if hasn't already been fetched.
-      if (typeof user === 'undefined') {
-        user = await getUserInfo(message.user);
-        output.users.push(user);
-      }
+      // TODO: I'd hate to make this request every time. But storing this data asynchronously
+      // seems to cause issues. Find a way?
+      const user = await getUserInfo(message.user);
       messageOutput.user = user;
 
       // Timestamp.
@@ -32,16 +25,18 @@ const getData = async () => {
       messageOutput.formattedDate = dateFormat(timestamp, 'mmmm dS, yyyy');
 
       // Push a new message per asset (even if they're in the same post).
-      for await (file of message.files) {
+      await Promise.all(message.files.map(async (file) => {
         output.messages.push({
           ...messageOutput,
           image: file.url_private,
         });
-      }
+      }));
     }
-  }
+  }));
 
-  return output;
+  return {
+    messages: output.messages.sort((a, b) => b.timestamp - a.timestamp),
+  };
 };
 
 module.exports = getData;
